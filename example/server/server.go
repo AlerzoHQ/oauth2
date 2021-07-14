@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/go-oauth2/oauth2/v4/generates"
+	"github.com/AlerzoHQ/oauth2/v4/generates"
 	"io"
 	"log"
 	"net/http"
@@ -13,11 +13,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-oauth2/oauth2/v4/errors"
-	"github.com/go-oauth2/oauth2/v4/manage"
-	"github.com/go-oauth2/oauth2/v4/models"
-	"github.com/go-oauth2/oauth2/v4/server"
-	"github.com/go-oauth2/oauth2/v4/store"
+	"github.com/AlerzoHQ/oauth2/v4/errors"
+	"github.com/AlerzoHQ/oauth2/v4/manage"
+	"github.com/AlerzoHQ/oauth2/v4/models"
+	"github.com/AlerzoHQ/oauth2/v4/server"
+	"github.com/AlerzoHQ/oauth2/v4/store"
 	"github.com/go-session/session"
 )
 
