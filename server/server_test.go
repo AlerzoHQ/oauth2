@@ -7,13 +7,14 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/gavv/httpexpect"
 	"github.com/AlerzoHQ/oauth2/v4"
 	"github.com/AlerzoHQ/oauth2/v4/errors"
 	"github.com/AlerzoHQ/oauth2/v4/manage"
 	"github.com/AlerzoHQ/oauth2/v4/models"
 	"github.com/AlerzoHQ/oauth2/v4/server"
 	"github.com/AlerzoHQ/oauth2/v4/store"
+	"github.com/gavv/httpexpect"
+	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -46,6 +47,7 @@ func clientStore(domain string) oauth2.ClientStore {
 }
 
 func testServer(t *testing.T, w http.ResponseWriter, r *http.Request) {
+	gin.CreateTestContext(w)
 	switch r.URL.Path {
 	case "/authorize":
 		err := srv.HandleAuthorizeRequest(w, r)
@@ -61,6 +63,8 @@ func testServer(t *testing.T, w http.ResponseWriter, r *http.Request) {
 }
 
 func TestAuthorizeCode(t *testing.T) {
+	router := gin.Default()
+
 	tsrv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		testServer(t, w, r)
 	}))
@@ -96,7 +100,7 @@ func TestAuthorizeCode(t *testing.T) {
 
 	manager.MapClientStorage(clientStore(csrv.URL))
 	srv = server.NewDefaultServer(manager)
-	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+	srv.SetUserAuthorizationHandler(func(c *gin.Context) (userID string, err error) {
 		userID = "000000"
 		return
 	})
@@ -147,7 +151,7 @@ func TestAuthorizeCodeWithChallengePlain(t *testing.T) {
 
 	manager.MapClientStorage(clientStore(csrv.URL))
 	srv = server.NewDefaultServer(manager)
-	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+	srv.SetUserAuthorizationHandler(func(c *gin.Context) (userID string, err error) {
 		userID = "000000"
 		return
 	})
@@ -199,7 +203,7 @@ func TestAuthorizeCodeWithChallengeS256(t *testing.T) {
 
 	manager.MapClientStorage(clientStore(csrv.URL))
 	srv = server.NewDefaultServer(manager)
-	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+	srv.SetUserAuthorizationHandler(func(c *gin.Context) (userID string, err error) {
 		userID = "000000"
 		return
 	})
@@ -227,7 +231,7 @@ func TestImplicit(t *testing.T) {
 
 	manager.MapClientStorage(clientStore(csrv.URL))
 	srv = server.NewDefaultServer(manager)
-	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+	srv.SetUserAuthorizationHandler(func(c *gin.Context) (userID string, err error) {
 		userID = "000000"
 		return
 	})
@@ -373,7 +377,7 @@ func TestRefreshing(t *testing.T) {
 
 	manager.MapClientStorage(clientStore(csrv.URL))
 	srv = server.NewDefaultServer(manager)
-	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+	srv.SetUserAuthorizationHandler(func(c *gin.Context) (userID string, err error) {
 		userID = "000000"
 		return
 	})

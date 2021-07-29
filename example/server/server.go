@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/AlerzoHQ/oauth2/v4/generates"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +11,9 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/AlerzoHQ/oauth2/v4/generates"
+	"github.com/gin-gonic/gin"
 
 	"github.com/AlerzoHQ/oauth2/v4/errors"
 	"github.com/AlerzoHQ/oauth2/v4/manage"
@@ -156,7 +158,7 @@ func dumpRequest(writer io.Writer, header string, r *http.Request) error {
 	return nil
 }
 
-func userAuthorizeHandler(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+func userAuthorizeHandler(c *gin.Context) (userID string, err error) {
 	if dumpvar {
 		_ = dumpRequest(os.Stdout, "userAuthorizeHandler", r) // Ignore the error
 	}

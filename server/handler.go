@@ -6,6 +6,7 @@ import (
 
 	"github.com/AlerzoHQ/oauth2/v4"
 	"github.com/AlerzoHQ/oauth2/v4/errors"
+	"github.com/gin-gonic/gin"
 )
 
 type (
@@ -19,7 +20,7 @@ type (
 	ClientScopeHandler func(tgr *oauth2.TokenGenerateRequest) (allowed bool, err error)
 
 	// UserAuthorizationHandler get user id from request authorization
-	UserAuthorizationHandler func(w http.ResponseWriter, r *http.Request) (userID string, err error)
+	UserAuthorizationHandler func(c *gin.Context) (userID string, err error)
 
 	// PasswordAuthorizationHandler get user id from username and password
 	PasswordAuthorizationHandler func(username, password string) (userID string, err error)

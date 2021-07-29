@@ -11,6 +11,7 @@ import (
 
 	"github.com/AlerzoHQ/oauth2/v4"
 	"github.com/AlerzoHQ/oauth2/v4/errors"
+	"github.com/gin-gonic/gin"
 )
 
 // NewDefaultServer create a default authorization server
@@ -28,7 +29,7 @@ func NewServer(cfg *Config, manager oauth2.Manager) *Server {
 	// default handler
 	srv.ClientInfoHandler = ClientBasicHandler
 
-	srv.UserAuthorizationHandler = func(w http.ResponseWriter, r *http.Request) (string, error) {
+	srv.UserAuthorizationHandler = func(c *gin.Context) (string, error) {
 		return "", errors.ErrAccessDenied
 	}
 
@@ -153,8 +154,7 @@ func (s *Server) CheckCodeChallengeMethod(ccm oauth2.CodeChallengeMethod) bool {
 func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest, error) {
 	redirectURI := r.FormValue("redirect_uri")
 	clientID := r.FormValue("client_id")
-	if !(r.Method == "GET" || r.Method == "POST") ||
-		clientID == "" {
+	if _, err := s.Manager.GetClient(r.Context(), clientID); err != nil || clientID == "" {
 		return nil, errors.ErrInvalidRequest
 	}
 
@@ -265,18 +265,18 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) m
 }
 
 // HandleAuthorizeRequest the authorization request handling
-func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) error {
-	ctx := r.Context()
+func (s *Server) HandleAuthorizeRequest(c *gin.Context) error {
+	ctx := c
 
-	req, err := s.ValidationAuthorizeRequest(r)
+	req, err := s.ValidationAuthorizeRequest(c.Request)
 	if err != nil {
-		return s.redirectError(w, req, err)
+		return s.redirectError(c.Writer, req, err)
 	}
 
 	// user authorization
-	userID, err := s.UserAuthorizationHandler(w, r)
+	userID, err := s.UserAuthorizationHandler(c)
 	if err != nil {
-		return s.redirectError(w, req, err)
+		return s.redirectError(c.Writer, req, err)
 	} else if userID == "" {
 		return nil
 	}
@@ -284,7 +284,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 
 	// specify the scope of authorization
 	if fn := s.AuthorizeScopeHandler; fn != nil {
-		scope, err := fn(w, r)
+		scope, err := fn(c.Writer, c.Request)
 		if err != nil {
 			return err
 		} else if scope != "" {
@@ -294,7 +294,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 
 	// specify the expiration time of access token
 	if fn := s.AccessTokenExpHandler; fn != nil {
-		exp, err := fn(w, r)
+		exp, err := fn(c.Writer, c.Request)
 		if err != nil {
 			return err
 		}
@@ -303,7 +303,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 
 	ti, err := s.GetAuthorizeToken(ctx, req)
 	if err != nil {
-		return s.redirectError(w, req, err)
+		return s.redirectError(c.Writer, req, err)
 	}
 
 	// If the redirect URI is empty, the default domain provided by the client is used.
@@ -315,7 +315,7 @@ func (s *Server) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) 
 		req.RedirectURI = client.GetDomain()
 	}
 
-	return s.redirect(w, req, s.GetAuthorizeData(req.ResponseType, ti))
+	return s.redirect(c.Writer, req, s.GetAuthorizeData(req.ResponseType, ti))
 }
 
 // ValidationTokenRequest the token request validation
