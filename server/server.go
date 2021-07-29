@@ -313,8 +313,7 @@ func (s *Server) HandleAuthorizeRequest(c *gin.Context) (string, error) {
 		req.RedirectURI = client.GetDomain()
 	}
 
-	return ti.GetCode(), nil
-	// return s.redirect(c.Writer, req, s.GetAuthorizeData(req.ResponseType, ti))
+	return s.GetRedirectURI(req, s.GetAuthorizeData(req.ResponseType, ti))
 }
 
 // ValidationTokenRequest the token request validation
