@@ -63,8 +63,6 @@ func testServer(t *testing.T, w http.ResponseWriter, r *http.Request) {
 }
 
 func TestAuthorizeCode(t *testing.T) {
-	router := gin.Default()
-
 	tsrv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		testServer(t, w, r)
 	}))

@@ -71,8 +71,8 @@ func (s *Server) redirect(w http.ResponseWriter, req *AuthorizeRequest, data map
 		return err
 	}
 
-	w.Header().Set("Location", uri)
-	w.WriteHeader(302)
+	w.Header().Set("Redirect", uri)
+	// w.WriteHeader(302)
 	return nil
 }
 
@@ -265,20 +265,18 @@ func (s *Server) GetAuthorizeData(rt oauth2.ResponseType, ti oauth2.TokenInfo) m
 }
 
 // HandleAuthorizeRequest the authorization request handling
-func (s *Server) HandleAuthorizeRequest(c *gin.Context) error {
+func (s *Server) HandleAuthorizeRequest(c *gin.Context) (string, error) {
 	ctx := c
 
 	req, err := s.ValidationAuthorizeRequest(c.Request)
 	if err != nil {
-		return s.redirectError(c.Writer, req, err)
+		return "", err
 	}
 
 	// user authorization
 	userID, err := s.UserAuthorizationHandler(c)
 	if err != nil {
-		return s.redirectError(c.Writer, req, err)
-	} else if userID == "" {
-		return nil
+		return "", err
 	}
 	req.UserID = userID
 
@@ -286,7 +284,7 @@ func (s *Server) HandleAuthorizeRequest(c *gin.Context) error {
 	if fn := s.AuthorizeScopeHandler; fn != nil {
 		scope, err := fn(c.Writer, c.Request)
 		if err != nil {
-			return err
+			return "", err
 		} else if scope != "" {
 			req.Scope = scope
 		}
@@ -296,26 +294,27 @@ func (s *Server) HandleAuthorizeRequest(c *gin.Context) error {
 	if fn := s.AccessTokenExpHandler; fn != nil {
 		exp, err := fn(c.Writer, c.Request)
 		if err != nil {
-			return err
+			return "", err
 		}
 		req.AccessTokenExp = exp
 	}
 
 	ti, err := s.GetAuthorizeToken(ctx, req)
 	if err != nil {
-		return s.redirectError(c.Writer, req, err)
+		return "", nil
 	}
 
 	// If the redirect URI is empty, the default domain provided by the client is used.
 	if req.RedirectURI == "" {
 		client, err := s.Manager.GetClient(ctx, req.ClientID)
 		if err != nil {
-			return err
+			return "", err
 		}
 		req.RedirectURI = client.GetDomain()
 	}
 
-	return s.redirect(c.Writer, req, s.GetAuthorizeData(req.ResponseType, ti))
+	return ti.GetCode(), nil
+	// return s.redirect(c.Writer, req, s.GetAuthorizeData(req.ResponseType, ti))
 }
 
 // ValidationTokenRequest the token request validation
